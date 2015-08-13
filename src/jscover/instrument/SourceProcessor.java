@@ -21,7 +21,6 @@ public class SourceProcessor {
     private static final String initFunction = "  _$jscoverage['%s'].functionData[%d] = 0;\n";
 
     private String uri;
-    private ParseTreeInstrumenter instrumenter;
     private BranchInstrumentor branchInstrumentor;
     private Parser parser;
     private IoUtils ioUtils = IoUtils.getInstance();
@@ -32,17 +31,12 @@ public class SourceProcessor {
 
     public SourceProcessor(ConfigurationCommon config, String uri) {
         this.uri = uri;
-        this.instrumenter = new ParseTreeInstrumenter(uri, config.isIncludeFunction());
         this.branchInstrumentor = new BranchInstrumentor(uri, config.isDetectCoalesce());
         parser = new Parser(config.getCompilerEnvirons());
         this.includeBranchCoverage = config.isIncludeBranch();
         this.includeFunctionCoverage = config.isIncludeFunction();
         this.localStorage = config.isLocalStorage();
         this.isolateBrowser = config.isolateBrowser();
-    }
-
-    ParseTreeInstrumenter getInstrumenter() {
-        return instrumenter;
     }
 
     BranchInstrumentor getBranchInstrumentor() {
