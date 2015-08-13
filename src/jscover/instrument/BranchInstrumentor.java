@@ -262,10 +262,11 @@ public class BranchInstrumentor implements NodeVisitor {
 
     private CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
     private ErrorReporter errorReporter = compilerEnvirons.getErrorReporter();
+
     public AstRoot parse(String code) {
         Parser p = new Parser(compilerEnvirons, errorReporter);
 
-        System.out.println(code);
+        //System.out.println(code);
         return p.parse(code, null, 0);
     }
 
