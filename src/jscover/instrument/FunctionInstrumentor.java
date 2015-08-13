@@ -12,13 +12,13 @@ import org.mozilla.javascript.ast.*;
 
 import java.util.*;
 
-public class BranchInstrumentor implements NodeVisitor {
+public class FunctionInstrumentor implements NodeVisitor {
 
     private Set<PostProcess> postProcesses = new HashSet<PostProcess>();
     private String uri;
     private AstRoot astRoot;
 
-    public BranchInstrumentor(String uri) {
+    public FunctionInstrumentor(String uri) {
         this.uri = uri;
     }
 
@@ -266,7 +266,7 @@ public class BranchInstrumentor implements NodeVisitor {
     public AstRoot parse(String code) {
         Parser p = new Parser(compilerEnvirons, errorReporter);
 
-        //System.out.println(code);
+        System.out.println(code);
         return p.parse(code, null, 0);
     }
 
