@@ -8,14 +8,10 @@ import com.clematis.PointOfInterest;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.*;
 
 import java.util.*;
 import java.util.logging.Logger;
-
-import static java.lang.String.format;
-import static java.util.logging.Level.SEVERE;
 
 public class BranchInstrumentor implements NodeVisitor {
     private static final String initBranchLine = "  _$jscoverage['%s'].branchData['%d'] = [];\n";
@@ -24,16 +20,13 @@ public class BranchInstrumentor implements NodeVisitor {
     private static int functionId = 1;
 
     private BranchStatementBuilder branchStatementBuilder = new BranchStatementBuilder();
-    private BranchHelper branchHelper = BranchHelper.getInstance();
     private Set<PostProcess> postProcesses = new HashSet<PostProcess>();
     private String uri;
-    private boolean detectCoalesce;
     private AstRoot astRoot;
     private SortedMap<Integer, SortedSet<Integer>> lineConditionMap = new TreeMap<Integer, SortedSet<Integer>>();
 
-    public BranchInstrumentor(String uri, boolean detectCoalesce) {
+    public BranchInstrumentor(String uri) {
         this.uri = uri;
-        this.detectCoalesce = detectCoalesce;
     }
 
     public SortedMap<Integer, SortedSet<Integer>> getLineConditionMap() {
@@ -47,108 +40,6 @@ public class BranchInstrumentor implements NodeVisitor {
     public void postProcess() {
         for (PostProcess postProcess : postProcesses)
             postProcess.process();
-    }
-
-    private void replaceWithFunction(AstNode node) {
-        AstNode parent = node.getParent();
-
-        Integer conditionId = 1;
-        SortedSet<Integer> conditions = lineConditionMap.get(node.getLineno());
-        if (conditions == null) {
-            conditions = new TreeSet<Integer>();
-            lineConditionMap.put(node.getLineno(), conditions);
-        } else {
-            conditionId = conditions.last() + 1;
-        }
-        conditions.add(conditionId);
-
-        FunctionNode functionNode = branchStatementBuilder.buildBranchRecordingFunction(uri, functionId++, node.getLineno(), conditionId);
-
-        astRoot.addChildrenToFront(functionNode);
-        ExpressionStatement conditionArrayDeclaration = branchStatementBuilder.buildLineAndConditionInitialisation(uri
-                , node.getLineno(), conditionId, getLinePosition(node), node.getLength(), node.toSource());
-        astRoot.addChildrenToFront(conditionArrayDeclaration);
-
-        FunctionCall functionCall = new FunctionCall();
-        List<AstNode> arguments = new ArrayList<AstNode>();
-        functionCall.setTarget(functionNode.getFunctionName());
-
-        if (node.getType() == Token.COMMA) {
-            ParenthesizedExpression parenthesizedExpression = new ParenthesizedExpression();
-            parenthesizedExpression.setExpression(node);
-            arguments.add(parenthesizedExpression);
-        } else
-            arguments.add(node);
-        functionCall.setArguments(arguments);
-        if (parent instanceof IfStatement && node == ((IfStatement) parent).getCondition()) {
-            ((IfStatement) parent).setCondition(functionCall);
-        } else if (parent instanceof ParenthesizedExpression) {
-            ((ParenthesizedExpression)parent).setExpression(functionCall);
-        } else if (parent instanceof InfixExpression) {//This covers Assignment
-            InfixExpression infixExpression = (InfixExpression) parent;
-            if (infixExpression.getLeft() == node)
-                infixExpression.setLeft(functionCall);
-            else
-                infixExpression.setRight(functionCall);
-        } else if (parent instanceof ReturnStatement) {
-            ((ReturnStatement)parent).setReturnValue(functionCall);
-        } else if (parent instanceof VariableInitializer) {
-            ((VariableInitializer)parent).setInitializer(functionCall);
-        } else if (parent instanceof SwitchStatement) {
-            ((SwitchStatement)parent).setExpression(functionCall);
-        } else if (parent instanceof WhileLoop) {
-            ((WhileLoop)parent).setCondition(functionCall);
-        } else if (parent instanceof DoLoop) {
-            ((DoLoop)parent).setCondition(functionCall);
-        } else if (parent instanceof ForLoop) {
-            ((ForLoop)parent).setCondition(functionCall);
-        } else if (parent instanceof ElementGet) {
-            ((ElementGet)parent).setElement(functionCall);
-        } else if (parent instanceof ExpressionStatement) {
-            ((ExpressionStatement)parent).setExpression(functionCall);
-        } else if (parent instanceof ConditionalExpression) {
-            ConditionalExpression ternary = (ConditionalExpression) parent;
-            if (ternary.getTestExpression() == node)
-                ternary.setTestExpression(functionCall);
-            else if (ternary.getTrueExpression() == node)
-                ternary.setTrueExpression(functionCall);
-            else
-                ternary.setFalseExpression(functionCall);
-        } else if (parent instanceof ArrayLiteral) {
-            postProcesses.add(new PostProcess(parent, node, functionCall) {
-                @Override
-                void run(AstNode parent, AstNode node, AstNode functionCall) {
-                    final ArrayLiteral arrayParent = (ArrayLiteral) parent;
-                    List<AstNode> elements = arrayParent.getElements();
-                    List<AstNode> newElements = new ArrayList<AstNode>();
-                    for (AstNode element : elements) {
-                        if (element == node)
-                            newElements.add(functionCall);
-                        else
-                            newElements.add(element);
-                    }
-                    arrayParent.setElements(newElements);
-                }
-            });
-        } else if (parent instanceof FunctionCall) {
-            postProcesses.add(new PostProcess(parent, node, functionCall) {
-                @Override
-                void run(AstNode parent, AstNode node, AstNode functionCall) {
-                    FunctionCall fnParent = (FunctionCall) parent;
-                    List<AstNode> fnParentArguments = fnParent.getArguments();
-                    List<AstNode> newFnParentArguments = new ArrayList<AstNode>();
-                    for (AstNode arg : fnParentArguments) {
-                        if (arg == node)
-                            newFnParentArguments.add(functionCall);
-                        else
-                            newFnParentArguments.add(arg);
-                    }
-                    fnParent.setArguments(newFnParentArguments);
-                }
-            });
-        } else {
-            logger.log(SEVERE, format("Couldn't insert wrapper for parent %s, file: %s, line: %d, position: %d, source: %s", parent.getClass().getName(), uri, node.getLineno(), node.getPosition(), node.toSource()));
-        }
     }
 
     /**
@@ -195,19 +86,6 @@ public class BranchInstrumentor implements NodeVisitor {
             parent = parent.getParent();
         }
         return pos-1;
-    }
-
-    protected String getJsLineInitialization() {
-        String fileName = uri.replace("\\", "\\\\").replace("'", "\\'");
-        StringBuilder sb = new StringBuilder(format("if (! _$jscoverage['%s'].branchData) {\n", fileName));
-        sb.append(format("  _$jscoverage['%s'].branchData = {};\n", fileName));
-        for (Integer line : lineConditionMap.keySet()) {
-            sb.append(format(initBranchLine, fileName, line));
-            for (Integer condition : lineConditionMap.get(line))
-                sb.append(format(initBranchCondition, fileName, line, condition));
-        }
-        sb.append("}\n");
-        return sb.toString();
     }
 
     private void handleFunctionCall(FunctionCall node) {

@@ -4,7 +4,6 @@ package jscover.instrument;
  * Created by hyou on 8/12/15.
  */
 import jscover.ConfigurationCommon;
-import jscover.util.IoUtils;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
@@ -23,19 +22,14 @@ public class SourceProcessor {
     private String uri;
     private BranchInstrumentor branchInstrumentor;
     private Parser parser;
-    private IoUtils ioUtils = IoUtils.getInstance();
     private boolean includeBranchCoverage;
-    private boolean includeFunctionCoverage;
-    private boolean localStorage;
     private boolean isolateBrowser;
 
     public SourceProcessor(ConfigurationCommon config, String uri) {
         this.uri = uri;
-        this.branchInstrumentor = new BranchInstrumentor(uri, config.isDetectCoalesce());
+        this.branchInstrumentor = new BranchInstrumentor(uri);
         parser = new Parser(config.getCompilerEnvirons());
         this.includeBranchCoverage = config.isIncludeBranch();
-        this.includeFunctionCoverage = config.isIncludeFunction();
-        this.localStorage = config.isLocalStorage();
         this.isolateBrowser = config.isolateBrowser();
     }
 
