@@ -14,14 +14,9 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //String testFilePath = "/Users/hyou/hyou_1tier_view/BIWebApp/code/html/MSTRWeb/javascript/mojo/js/source/DocModel.js";
         String testFilePath = "/Users/hyou/Downloads/one-tier-multiline.js";
 
         SourceProcessor sourceProcessor = new SourceProcessor(new ConfigurationCommon(), "test.js");
-
-        // TEST ONLY
-        //String source = "this.someFn()\n    ._renderItem = function() {};";
-        //String expectedSource = "_$jscoverage['test.js'].lineData[1]++;\nthis.someFn()._renderItem = function() {\n  _$jscoverage['test.js'].functionData[0]++;\n};\n";
 
         String source = IoUtils.getInstance().loadFromFileSystem(new File(testFilePath));
         String instrumentedSource = sourceProcessor.instrumentSource(source);
