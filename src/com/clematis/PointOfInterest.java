@@ -72,8 +72,8 @@ public class PointOfInterest {
                 if (this.getEnd() == -1) {
                     // Function Beginning
                     String code = "console.log(" +
-                            "\"messageType: FUNCTION_ENTER, " +
-                            "timeStamp: Date.now(), " +
+                            "\"logType: FUNCTION_ENTER, " +
+                            "timeStamp: \" + Date.now() + \", " +
                             "targetFunction: " + getName().replace("\n", "").trim() + ", " +
                             "lineNo:" + getLineNo() + ", " +
                             "args: [";
@@ -90,8 +90,8 @@ public class PointOfInterest {
                     } else {
 					/* no arguments to instrument here */
                         return "console.log(" +
-                                "\"messageType: FUNCTION_ENTER, " +
-                                "timeStamp: Date.now(), " +
+                                "\"logType: FUNCTION_ENTER, " +
+                                "timeStamp: \" + Date.now() + \", " +
                                 "targetFunction: " + getName().replace("\n", "").trim() + "," +
                                 "lineNo: " + getLineNo() + ", " +
                                 "scopeName: " + getScopeName() + "\");";
@@ -101,8 +101,8 @@ public class PointOfInterest {
                 } else if (this.getEnd() == -2) {
                     // Function End
                     return "console.log(" +
-                            "\"messageType: FUNCTION_EXIT, " +
-                            "timeStamp: Date.now(), " +
+                            "\"logType: FUNCTION_EXIT, " +
+                            "timeStamp: \" + Date.now() + \", " +
                             "targetFunction: " + getName().replace("\n", "").trim() + "," +
                             "lineNo: " + getLineNo() + ", " +
                             "scopeName: " + getScopeName() + "\");";

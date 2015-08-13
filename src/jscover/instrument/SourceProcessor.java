@@ -7,10 +7,6 @@ import jscover.ConfigurationCommon;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-import java.util.SortedSet;
-
-import static java.lang.String.format;
-
 //Function Coverage added by Howard Abrams, CA Technologies (HA-CA) - May 20 2013
 public class SourceProcessor {
 
@@ -20,21 +16,21 @@ public class SourceProcessor {
     private static final String initFunction = "  _$jscoverage['%s'].functionData[%d] = 0;\n";
 
     private String uri;
-    private BranchInstrumentor branchInstrumentor;
+    private FunctionInstrumentor functionInstrumentor;
     private Parser parser;
     private boolean includeBranchCoverage;
     private boolean isolateBrowser;
 
     public SourceProcessor(ConfigurationCommon config, String uri) {
         this.uri = uri;
-        this.branchInstrumentor = new BranchInstrumentor(uri);
+        this.functionInstrumentor = new FunctionInstrumentor(uri);
         parser = new Parser(config.getCompilerEnvirons());
         this.includeBranchCoverage = config.isIncludeBranch();
         this.isolateBrowser = config.isolateBrowser();
     }
 
-    BranchInstrumentor getBranchInstrumentor() {
-        return branchInstrumentor;
+    FunctionInstrumentor getFunctionInstrumentor() {
+        return functionInstrumentor;
     }
 
     private String getIsolateBrowserJS() {
@@ -51,34 +47,10 @@ public class SourceProcessor {
         //Do not add line number
         //astRoot.visitAll(instrumenter);
         if (includeBranchCoverage) {
-            branchInstrumentor.setAstRoot(astRoot);
-            astRoot.visitAll(branchInstrumentor);
-            //branchInstrumentor.postProcess();
+            functionInstrumentor.setAstRoot(astRoot);
+            astRoot.visitAll(functionInstrumentor);
+            //functionInstrumentor.postProcess();
         }
         return astRoot.toSource();
-    }
-
-    protected String getJsLineInitialization(String fileName, SortedSet<Integer> validLines) {
-        fileName = fileName.replace("\\", "\\\\").replace("'", "\\'");
-        StringBuilder sb = new StringBuilder(format("if (! _$jscoverage['%s']) {\n", fileName));
-        sb.append(format("  _$jscoverage['%s'] = {};\n", fileName));
-        sb.append(format("  _$jscoverage['%s'].lineData = [];\n", fileName));
-        for (Integer line : validLines) {
-            sb.append(format(initLine, fileName, line));
-        }
-        sb.append("}\n");
-        return sb.toString();
-    }
-
-    // Function Coverage (HA-CA)
-    protected String getJsFunctionInitialization(String fileName, int numFunction) {
-        fileName = fileName.replace("\\", "\\\\").replace("'", "\\'");
-        StringBuilder sb = new StringBuilder(format("if (! _$jscoverage['%s'].functionData) {\n", fileName));
-        sb.append(format("  _$jscoverage['%s'].functionData = [];\n", fileName));
-        for ( int i = 0; i < numFunction; ++i) {
-            sb.append(format(initFunction, fileName, i));
-        }
-        sb.append("}\n");
-        return sb.toString();
     }
 }
