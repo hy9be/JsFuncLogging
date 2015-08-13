@@ -1,4 +1,4 @@
-package com.microstrategy;
+package client;
 
 import jscover.ConfigurationCommon;
 import jscover.instrument.SourceProcessor;
