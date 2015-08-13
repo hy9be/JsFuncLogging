@@ -11,26 +11,15 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.*;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public class BranchInstrumentor implements NodeVisitor {
-    private static final String initBranchLine = "  _$jscoverage['%s'].branchData['%d'] = [];\n";
-    private static final String initBranchCondition = "  _$jscoverage['%s'].branchData['%d'][%d] = new BranchData();\n";
-    private static final Logger logger = Logger.getLogger(BranchInstrumentor.class.getName());
-    private static int functionId = 1;
 
-    private BranchStatementBuilder branchStatementBuilder = new BranchStatementBuilder();
     private Set<PostProcess> postProcesses = new HashSet<PostProcess>();
     private String uri;
     private AstRoot astRoot;
-    private SortedMap<Integer, SortedSet<Integer>> lineConditionMap = new TreeMap<Integer, SortedSet<Integer>>();
 
     public BranchInstrumentor(String uri) {
         this.uri = uri;
-    }
-
-    public SortedMap<Integer, SortedSet<Integer>> getLineConditionMap() {
-        return lineConditionMap;
     }
 
     public void setAstRoot(AstRoot astRoot) {
